@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Payment Test - Villa Payment API</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+      }
+      h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+      .subtitle { color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem; }
+      .env-note {
+        font-size: 0.75rem;
+        color: #64748b;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-bottom: 0.25rem;
+        margin-top: 1rem;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        background: #1e293b;
+        color: #e2e8f0;
+        font-size: 0.9375rem;
+      }
+      button {
+        padding: 0.75rem 1rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+        margin-top: 1rem;
+        margin-right: 0.5rem;
+      }
+      button:hover { background: #2563eb; }
+      button:disabled { opacity: 0.7; cursor: not-allowed; }
+      button.secondary { background: #334155; }
+      button.secondary:hover { background: #475569; }
+      button.success { background: #10b981; }
+      button.success:hover { background: #059669; }
+      button.danger { background: #ef4444; }
+      button.danger:hover { background: #dc2626; }
+      .panel {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      .panel-title {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+      }
+      #form-container {
+        min-height: 400px;
+        border: 2px dashed #334155;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f172a;
+        position: relative;
+      }
+      #form-container.loaded {
+        border: none;
+        background: transparent;
+        display: block;
+        min-height: auto;
+      }
+      .placeholder-text {
+        color: #64748b;
+        font-size: 0.875rem;
+        text-align: center;
+        padding: 2rem;
+      }
+      .log-panel {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        padding: 1rem;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.75rem;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 1rem;
+      }
+      .log-entry { margin-bottom: 0.5rem; line-height: 1.4; }
+      .log-entry.error { color: #ef4444; }
+      .log-entry.success { color: #10b981; }
+      .log-entry.info { color: #60a5fa; }
+      .log-entry.warning { color: #f59e0b; }
+      iframe {
+        width: 100%;
+        min-height: 500px;
+        border: none;
+        border-radius: 8px;
+      }
+      .test-cards {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background: #0f172a;
+        border-radius: 6px;
+      }
+      .result-panel {
+        background: #1e293b;
+        border: 2px solid #10b981;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+      }
+      .result-panel.visible { display: block; }
+      .result-panel.failure {
+        border-color: #ef4444;
+      }
+      .result-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .result-url {
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.75rem;
+        word-break: break-all;
+        background: #0f172a;
+        padding: 0.75rem;
+        border-radius: 4px;
+        color: #10b981;
+        border: 1px solid #334155;
+      }
+      .result-panel.failure .result-url {
+        color: #ef4444;
+      }
+      .result-params {
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
+      }
+      .param-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid #334155;
+      }
+      .param-row:last-child { border-bottom: none; }
+      .param-label { color: #64748b; }
+      .param-value { 
+        color: #e2e8f0; 
+        font-family: 'Monaco', 'Menlo', monospace;
+        max-width: 60%;
+        word-break: break-all;
+        text-align: right;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .status-badge.success {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+      }
+      .status-badge.failure {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+      }
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        z-index: 10;
+      }
+      .loading-overlay.hidden { display: none; }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #334155;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .instructions {
+        background: #1e293b;
+        border-left: 4px solid #3b82f6;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+      .instructions h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.875rem;
+        color: #e2e8f0;
+      }
+      .instructions ol {
+        margin: 0;
+        padding-left: 1.25rem;
+        color: #94a3b8;
+      }
+      .instructions li {
+        margin-bottom: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Card Payment Test UI</h1>
+    <p class="subtitle">Test KBank payment flows with redirect callbacks</p>
+    
+    <div class="env-note">
+      <strong>Dev Environment</strong> — Uses test API keys.<br>
+      <strong>Test Card:</strong> <code>5444880117276129</code> (Mastercard)<br>
+      <strong>OTP:</strong> <code>123456</code> | Any CVV | Any future expiry date
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+      <h3>How to test:</h3>
+      <ol>
+        <li>Configure your callback URL below (where you want to be redirected after payment)</li>
+        <li>Click "Load KBank Payment Form" to load the iframe</li>
+        <li>Enter test card: <strong>5444880117276129</strong> | Expiry: any future date | CVV: any 3 digits</li>
+        <li>When prompted for OTP, enter: <strong>123456</strong></li>
+        <li>Submit payment — you will be redirected to your callback URL with status=success</li>
+        <li>Or click "Test Backend Redirect" to verify the failure redirect works without card entry (opens in new tab)</li>
+      </ol>
+    </div>
+
+    <!-- Configuration Panel -->
+    <div class="panel">
+      <div class="panel-title">Configuration</div>
+      
+      <label for="callback">Callback URL (redirect destination)</label>
+      <input type="text" id="callback" 
+             placeholder="https://yourapp.com/thankyou"
+             value="https://httpbin.org/get">
+      
+      <label for="orderId">Order ID</label>
+      <input type="text" id="orderId" value="002500011412">
+      
+      <label for="grandTotal">Amount (THB)</label>
+      <input type="text" id="grandTotal" value="74">
+      
+      <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+        <input type="checkbox" id="bypassOrder" checked />
+        <span>bypass_order (skip order verification for testing)</span>
+      </label>
+    </div>
+
+    <!-- Test Controls -->
+    <div class="panel">
+      <div class="panel-title">Test Scenarios</div>
+      
+      <button type="button" id="loadKBankBtn" onclick="loadKBankForm()" class="success">
+        Load KBank Payment Form
+      </button>
+      
+      <button type="button" id="testRedirectBtn" onclick="testBackendRedirect()" class="danger">
+        Test Backend Redirect (No KBank SDK)
+      </button>
+      
+      <button type="button" onclick="clearAll()" class="secondary">
+        Clear
+      </button>
+    </div>
+
+    <!-- KBank Form Container -->
+    <div class="panel">
+      <div class="panel-title">KBank Payment Form</div>
+      <div id="form-container">
+        <span class="placeholder-text">
+          Click "Load KBank Payment Form" above to load the payment iframe
+        </span>
+        <div id="loadingOverlay" class="loading-overlay hidden">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div id="resultPanel" class="result-panel">
+      <div class="result-title">
+        <span id="resultIcon">✓</span>
+        <span id="resultTitle">Redirect Captured</span>
+        <span id="resultStatus" class="status-badge"></span>
+      </div>
+      <div class="result-url" id="resultUrl"></div>
+      <div class="result-params" id="resultParams"></div>
+    </div>
+
+    <!-- Log Panel -->
+    <div class="panel">
+      <div class="panel-title">Debug Log</div>
+      <div id="logPanel" class="log-panel">
+        <div class="log-entry info">Ready to test payment flows...</div>
+      </div>
+    </div>
+
+    <script>
+      const CARDPAYMENT_URL = "https://shop.villamarket.com/api/payment3devapi/cardpayment";
+      const USER_ID = "cust_test_cd785f18d71349bfad9a6d516dcd26ea";
+      const MID = "401394788145001";
+      const API_KEY = "pkey_test_22211JYBY6Vj43HyQhp2rK7pK3FEQpkwPz7D8";
+
+      function log(message, type = 'info') {
+        const logPanel = document.getElementById('logPanel');
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        const timestamp = new Date().toLocaleTimeString('en-US', { 
+          hour12: false, 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit' 
+        });
+        entry.textContent = `[${timestamp}] ${message}`;
+        logPanel.appendChild(entry);
+        logPanel.scrollTop = logPanel.scrollHeight;
+      }
+
+      function clearAll() {
+        const container = document.getElementById('form-container');
+        container.innerHTML = `
+          <span class="placeholder-text">
+            Click "Load KBank Payment Form" above to load the payment iframe
+          </span>
+          <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+          </div>
+        `;
+        container.className = '';
+        document.getElementById('resultPanel').classList.remove('visible');
+        document.getElementById('resultPanel').classList.remove('failure');
+        log('Cleared form', 'info');
+      }
+
+      function showResult(url, isFailure = false) {
+        const panel = document.getElementById('resultPanel');
+        const urlDiv = document.getElementById('resultUrl');
+        const paramsDiv = document.getElementById('resultParams');
+        const icon = document.getElementById('resultIcon');
+        const title = document.getElementById('resultTitle');
+        const statusBadge = document.getElementById('resultStatus');
+        
+        urlDiv.textContent = url;
+        
+        // Update styling based on success/failure
+        if (isFailure) {
+          panel.classList.add('failure');
+          icon.textContent = '✗';
+          title.textContent = 'Failure Redirect Captured';
+          statusBadge.textContent = 'failure';
+          statusBadge.className = 'status-badge failure';
+        } else {
+          panel.classList.remove('failure');
+          icon.textContent = '✓';
+          title.textContent = 'Success Redirect Captured';
+          statusBadge.textContent = 'success';
+          statusBadge.className = 'status-badge success';
+        }
+        
+        // Parse URL parameters
+        try {
+          const urlObj = new URL(url);
+          const params = urlObj.searchParams;
+          let paramsHtml = '';
+          
+          const importantParams = ['orderId', 'status', 'amount', 'token', 'chargeId'];
+          
+          importantParams.forEach(key => {
+            const value = params.get(key);
+            if (value) {
+              paramsHtml += `
+                <div class="param-row">
+                  <span class="param-label">${key}:</span>
+                  <span class="param-value">${value}</span>
+                </div>
+              `;
+            }
+          });
+          
+          // Show all other params too
+          for (const [key, value] of params) {
+            if (!importantParams.includes(key)) {
+              paramsHtml += `
+                <div class="param-row">
+                  <span class="param-label">${key}:</span>
+                  <span class="param-value">${value}</span>
+                </div>
+              `;
+            }
+          }
+          
+          paramsDiv.innerHTML = paramsHtml || '<div class="param-row"><span class="param-label">No parameters found</span></div>';
+        } catch (e) {
+          paramsDiv.innerHTML = `<div class="param-row"><span class="param-label">Error parsing URL:</span><span class="param-value">${e.message}</span></div>`;
+        }
+        
+        panel.classList.add('visible');
+        
+        // Scroll to result
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function loadKBankForm() {
+        log('Initializing KBank payment form...', 'info');
+        
+        const container = document.getElementById('form-container');
+        const btn = document.getElementById('loadKBankBtn');
+        
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+        
+        // Show loading overlay
+        container.innerHTML = `
+          <div class="loading-overlay">
+            <div class="spinner"></div>
+          </div>
+        `;
+        
+        // Create form and container for KBank
+        setTimeout(() => {
+          container.innerHTML = '';
+          container.className = 'loaded';
+          
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = CARDPAYMENT_URL;
+          form.id = 'paymentForm';
+          
+          // Add hidden fields
+          const fields = [
+            ['orderId', document.getElementById('orderId').value || '002500011412'],
+            ['userId', USER_ID],
+            ['customerId', USER_ID],
+            ['grandTotal', document.getElementById('grandTotal').value || '74'],
+            ['basketId', 'basket_test_' + Math.random().toString(36).substring(2, 15)],
+            ['mid', MID],
+            ['paymentMethods', 'card'],
+          ];
+          
+          const callbackVal = document.getElementById('callback').value.trim();
+          if (callbackVal) {
+            fields.push(['callback', callbackVal]);
+            log(`Using callback URL: ${callbackVal}`, 'info');
+          } else {
+            log('No callback URL set — will use default', 'warning');
+          }
+          
+          if (document.getElementById('bypassOrder').checked) {
+            fields.push(['bypass_order', '1']);
+          }
+          
+          fields.forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+            log(`Form field: ${name} = ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`, 'info');
+          });
+          
+          // Create KBank script
+          const script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.src = 'https://dev-kpaymentgateway.kasikornbank.com/ui/v2/kpayment.min.js';
+          script.setAttribute('data-apikey', API_KEY);
+          script.setAttribute('data-amount', (document.getElementById('grandTotal').value || '74') + '.00');
+          script.setAttribute('data-currency', 'THB');
+          script.setAttribute('data-payment-methods', 'card');
+          script.setAttribute('data-name', 'Villa Market Test');
+          script.setAttribute('data-mid', MID);
+          script.setAttribute('data-customer-id', USER_ID);
+          
+          script.onload = function() {
+            log('✓ KBank script loaded', 'success');
+
+            if (typeof window.KPayment === 'undefined') {
+              log('✗ KPayment object not available', 'error');
+              btn.disabled = false;
+              btn.textContent = 'Load KBank Payment Form';
+              return;
+            }
+
+            // Use KBank SDK programmatic API (data-* auto-init doesn't
+            // work with dynamically injected scripts)
+            log('Initializing KBank SDK via programmatic API...', 'info');
+            const amount = (document.getElementById('grandTotal').value || '74') + '.00';
+            KPayment.setPublickey(API_KEY);
+            KPayment.setAmount(amount);
+            KPayment.setCurrency('THB');
+            KPayment.setPaymentMethods('card');
+            KPayment.setMid(MID);
+            KPayment.setCustomerId(USER_ID);
+            KPayment.create();
+            log('✓ KPayment.create() called — opening payment modal', 'success');
+            KPayment.show();
+            log('✓ KPayment.show() called — KBank modal should be visible', 'success');
+
+            btn.disabled = false;
+            btn.textContent = 'Reload KBank Form';
+          };
+
+          script.onerror = function() {
+            log('✗ Failed to load KBank script. Check internet connection.', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Load KBank Payment Form';
+          };
+          
+          form.appendChild(script);
+          container.appendChild(form);
+          
+          log('Payment form initialized — waiting for KBank script...', 'info');
+        }, 500);
+      }
+
+      // Test backend redirect using real form POST (no CORS issues)
+      function testBackendRedirect() {
+        log('Testing backend redirect via form POST...', 'info');
+
+        const callback = document.getElementById('callback').value.trim() || 'https://httpbin.org/get';
+        const orderId = document.getElementById('orderId').value || '002500011412';
+        const grandTotal = document.getElementById('grandTotal').value || '74';
+
+        log(`Callback: ${callback}`, 'info');
+        log(`Order ID: ${orderId}`, 'info');
+        log(`Amount: ${grandTotal} THB`, 'info');
+        log('Token: INVALID (forces failure redirect)', 'info');
+
+        // Build a real form and submit it — browser navigation, not fetch, so no CORS
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = CARDPAYMENT_URL;
+        form.target = '_blank'; // opens result in new tab
+
+        const fields = {
+          orderId: orderId,
+          userId: USER_ID,
+          customerId: USER_ID,
+          grandTotal: grandTotal,
+          basketId: 'basket_test_' + Math.random().toString(36).substring(2, 15),
+          token: 'tokn_test_22211INVALIDTOKEN',
+          mid: MID,
+          paymentMethods: 'card',
+          callback: callback,
+          bypass_order: '1'
+        };
+
+        for (const [name, value] of Object.entries(fields)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        log('Submitting form POST to backend (new tab will open)...', 'info');
+        log('Expected: Backend returns 200 with redirect to callback?status=failure', 'info');
+        form.submit();
+
+        // Clean up the form element
+        setTimeout(() => form.remove(), 1000);
+      }
+
+      // Listen for messages from iframe (KBank might send these)
+      window.addEventListener('message', function(e) {
+        log(`Received message from origin: ${e.origin}`, 'info');
+        log(`Message data: ${JSON.stringify(e.data)}`, 'info');
+      });
+
+      // Initial log
+      log('Payment Test UI loaded', 'info');
+      log(`API Endpoint: ${CARDPAYMENT_URL}`, 'info');
+      log('Ready to test payment flows', 'info');
+    </script>
+  </body>
+</html>
