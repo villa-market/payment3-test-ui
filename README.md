@@ -1,4 +1,9 @@
-# KBank Payment Test UI
+# KBank Payment Test UI (moved)
+
+> **This repository has moved into villaPayment3.**
+> It now lives at [`subrepos/payment3-test-ui`](https://github.com/villa-market/villaPayment3/tree/master/subrepos/payment3-test-ui)
+> in [villa-market/villaPayment3](https://github.com/villa-market/villaPayment3), imported with its full
+> history (villa-market/villaPayment3#205). Make changes there; this repository stays as a read-only archive.
 
 Test page for verifying the Villa Payment3 backend card payment flow. Demonstrates that the backend correctly handles KBank payment requests and returns proper redirects.
 
